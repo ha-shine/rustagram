@@ -100,6 +100,12 @@ pub fn blend_soft_light<I>(foreground: &I, background: &I) -> ImageBuffer<Rgba<u
     process_blend(foreground, background, &blend::blend_soft_light)
 }
 
+pub fn blend_overlay<I>(foreground: &I, background: &I) -> ImageBuffer<Rgba<u8>, Vec<u8>>
+    where I: GenericImage<Pixel=Rgba<u8>>
+{
+    process_blend(foreground, background, &blend::blend_overlay)
+}
+
 fn process_blend<I>(foreground: &I, background: &I, f: &Fn(u8, u8) -> u8) -> ImageBuffer<Rgba<u8>, Vec<u8>>
     where I: GenericImage<Pixel=Rgba<u8>>
 {

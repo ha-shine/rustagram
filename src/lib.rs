@@ -7,7 +7,8 @@ mod rustaops;
 
 pub enum FilterType {
     NineTeenSeventySeven,
-    Gingham
+    Gingham,
+    Kelvin
 }
 
 pub trait RustagramFilter {
@@ -19,6 +20,7 @@ impl RustagramFilter for RgbaImage {
         match ft {
             FilterType::NineTeenSeventySeven => apply_1977(&self),
             FilterType::Gingham => apply_gingham(&self),
+            FilterType::Kelvin => apply_kelvin(&self)
         }
     }
 }
@@ -40,5 +42,12 @@ fn apply_gingham(img: &RgbaImage) -> RgbaImage {
     let foreground = imageops::huerotate(&brightened, -10);
     let background = rustaops::fill_with_channels(width, height, &[230, 230, 230, 255]);
     let out = rustaops::blend_soft_light(&foreground, &background);
+    out
+}
+
+fn apply_kelvin(img: &RgbaImage) -> RgbaImage {
+    let (width, height) = img.dimensions();
+    let background = rustaops::fill_with_channels(width, height, &[183, 125, 33, 255]);
+    let out = rustaops::blend_overlay(img, &background);
     out
 }
