@@ -6,7 +6,7 @@ use rustagram::FilterType::*;
 
 fn main() {
     let img = image::open("test.jpg").unwrap();
-    let out = img.to_rgba().apply_filter(NineTeenSeventySeven);
+    let out = img.to_rgba().apply_filter(Gingham);
 
     out.save("output.png").unwrap();
 }

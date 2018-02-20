@@ -91,10 +91,16 @@ pub fn fill_with_channels(width: u32, height: u32, channels: &[u8; 4]) -> ImageB
 pub fn blend_screen<I>(foreground: &I, background: &I) -> ImageBuffer<Rgba<u8>, Vec<u8>>
     where I: GenericImage<Pixel=Rgba<u8>>
 {
-    process_blend(foreground, background, &blend::compute_blend_screen)
+    process_blend(foreground, background, &blend::blend_screen)
 }
 
-pub fn process_blend<I>(foreground: &I, background: &I, f: &Fn(u8, u8) -> u8) -> ImageBuffer<Rgba<u8>, Vec<u8>>
+pub fn blend_soft_light<I>(foreground: &I, background: &I) -> ImageBuffer<Rgba<u8>, Vec<u8>>
+    where I: GenericImage<Pixel=Rgba<u8>>
+{
+    process_blend(foreground, background, &blend::blend_soft_light)
+}
+
+fn process_blend<I>(foreground: &I, background: &I, f: &Fn(u8, u8) -> u8) -> ImageBuffer<Rgba<u8>, Vec<u8>>
     where I: GenericImage<Pixel=Rgba<u8>>
 {
     let (width, height) = foreground.dimensions();
