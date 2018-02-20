@@ -35,7 +35,6 @@ pub fn saturate<I>(image: &I, value: f32) -> ImageBuffer<Rgba<u8>, Vec<u8>>
     let mut out = ImageBuffer::new(width, height);
 
     let percent = value / 100.0;
-
     for y in 0..height {
         for x in 0..width {
             let channels = image.get_pixel(x, y).channels4();
@@ -49,6 +48,74 @@ pub fn saturate<I>(image: &I, value: f32) -> ImageBuffer<Rgba<u8>, Vec<u8>>
     out
 }
 
+pub fn pre_multiply<I>(image: &I) -> ImageBuffer<Rgba<u8>, Vec<u8>>
+    where I: GenericImage<Pixel=Rgba<u8>> {
+    let (width, height) = image.dimensions();
+    let mut out = ImageBuffer::new(width, height);
+    for y in 0..height {
+        for x in 0..width {
+            let channels = image.get_pixel(x, y).data;
+            let a = (channels[3] as f32);
+            let r = ((channels[0] as f32) * a / 255.0) as u8;
+            let g = ((channels[1] as f32) * a / 255.0) as u8;
+            let b = ((channels[2] as f32) * a / 255.0) as u8;
+
+            let channels = [r, g, b, channels[3]];
+            out.put_pixel(x, y, *Rgba::from_slice(&channels));
+        }
+    }
+
+    out
+}
+
+pub fn fill_with_channels(width: u32, height: u32, channels: &[u8; 4]) -> ImageBuffer<Rgba<u8>, Vec<u8>>
+{
+    let a = channels[3] as f32;
+    let r = ((channels[0] as f32) * a / 255.0) as u8;
+    let g = ((channels[1] as f32) * a / 255.0) as u8;
+    let b = ((channels[2] as f32) * a / 255.0) as u8;
+    let fill = [r, g, b, channels[3]];
+
+    let mut out = ImageBuffer::new(width, height);
+    for y in 0..height {
+        for x in 0..width {
+            out.put_pixel(x, y, *Rgba::from_slice(&fill));
+        }
+    }
+
+    out
+}
+
+pub fn apply_screen<I>(foreground: &I, background: &I) -> ImageBuffer<Rgba<u8>, Vec<u8>>
+    where I: GenericImage<Pixel=Rgba<u8>> {
+    let (width, height) = foreground.dimensions();
+    let mut out = ImageBuffer::new(width, height);
+    for (x, y, pixel) in out.enumerate_pixels_mut() {
+        let fg_data = foreground.get_pixel(x, y).data;
+        let bg_data = background.get_pixel(x, y).data;
+        let final_r = calculate_screen(fg_data[0], bg_data[0]);
+        let final_g = calculate_screen(fg_data[1], bg_data[1]);
+        let final_b = calculate_screen(fg_data[2], bg_data[2]);
+        let final_alpha = calculate_final_alpha(&fg_data, &bg_data);
+        *pixel = Rgba([final_r, final_g, final_b, final_alpha]);
+    }
+
+    out
+}
+
+fn calculate_final_alpha(fg: &[u8; 4], bg: &[u8; 4]) -> u8 {
+    let fg_alpha = fg[3] as f32 / 255.0;
+    let bg_alpha = bg[3] as f32 / 255.0;
+    let final_alpha = fg_alpha + bg_alpha * (1.0 - fg_alpha);
+    (final_alpha * 255.0) as u8
+}
+
+fn calculate_screen(x1: u8, x2: u8) -> u8 {
+    let f1 = x1 as f32 / 255.0;
+    let f2 = x2 as f32 / 255.0;
+    let v = 1.0 - (1.0 - f1) * (1.0 - f2);
+    (v * 255.0) as u8
+}
 // https://www.pocketmagic.net/enhance-saturation-in-images-programatically/
 fn saturate_hsv(hsv: &[f32; 4], percent: f32) -> [f32; 4] {
     let (mut h, mut s, mut v) = (hsv[0], hsv[1], hsv[2]);
@@ -60,6 +127,7 @@ fn saturate_hsv(hsv: &[f32; 4], percent: f32) -> [f32; 4] {
     }
     [hsv[0], s, hsv[2], hsv[3]]
 }
+
 // https://stackoverflow.com/questions/13806483/increase-or-decrease-color-saturation
 fn rgb_to_hsv(rgba: &[u8; 4]) -> [f32; 4] {
     let (mut h, mut s) = (0.0, 0.0);
@@ -89,6 +157,7 @@ fn rgb_to_hsv(rgba: &[u8; 4]) -> [f32; 4] {
     }
     [h, s, v, a]
 }
+
 fn hsv_to_rgb(hsv: &[f32; 4]) -> [u8; 4] {
     let (mut r, mut g, mut b, a) = (0.0, 0.0, 0.0, hsv[3]);
     let mut h = hsv[0];
