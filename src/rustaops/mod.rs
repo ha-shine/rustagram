@@ -3,6 +3,8 @@ extern crate image;
 use image::{GenericImage, ImageBuffer, Pixel, Rgba};
 use image::math::utils::clamp;
 
+mod blend;
+
 pub fn brighten_by_percent<I, P>(image: &I, value: f32) -> ImageBuffer<P, Vec<u8>>
     where I: GenericImage<Pixel=P>,
           P: Pixel<Subpixel=u8> + 'static {
@@ -55,7 +57,7 @@ pub fn pre_multiply<I>(image: &I) -> ImageBuffer<Rgba<u8>, Vec<u8>>
     for y in 0..height {
         for x in 0..width {
             let channels = image.get_pixel(x, y).data;
-            let a = (channels[3] as f32);
+            let a = channels[3] as f32;
             let r = ((channels[0] as f32) * a / 255.0) as u8;
             let g = ((channels[1] as f32) * a / 255.0) as u8;
             let b = ((channels[2] as f32) * a / 255.0) as u8;
@@ -86,39 +88,33 @@ pub fn fill_with_channels(width: u32, height: u32, channels: &[u8; 4]) -> ImageB
     out
 }
 
-pub fn apply_screen<I>(foreground: &I, background: &I) -> ImageBuffer<Rgba<u8>, Vec<u8>>
-    where I: GenericImage<Pixel=Rgba<u8>> {
+pub fn blend_screen<I>(foreground: &I, background: &I) -> ImageBuffer<Rgba<u8>, Vec<u8>>
+    where I: GenericImage<Pixel=Rgba<u8>>
+{
+    process_blend(foreground, background, &blend::compute_blend_screen)
+}
+
+pub fn process_blend<I>(foreground: &I, background: &I, f: &Fn(u8, u8) -> u8) -> ImageBuffer<Rgba<u8>, Vec<u8>>
+    where I: GenericImage<Pixel=Rgba<u8>>
+{
     let (width, height) = foreground.dimensions();
     let mut out = ImageBuffer::new(width, height);
     for (x, y, pixel) in out.enumerate_pixels_mut() {
         let fg_data = foreground.get_pixel(x, y).data;
         let bg_data = background.get_pixel(x, y).data;
-        let final_r = calculate_screen(fg_data[0], bg_data[0]);
-        let final_g = calculate_screen(fg_data[1], bg_data[1]);
-        let final_b = calculate_screen(fg_data[2], bg_data[2]);
-        let final_alpha = calculate_final_alpha(&fg_data, &bg_data);
+        let final_r = f(fg_data[0], bg_data[0]);
+        let final_g = f(fg_data[1], bg_data[1]);
+        let final_b = f(fg_data[2], bg_data[2]);
+        let final_alpha = blend::compute_final_alpha(&fg_data, &bg_data);
         *pixel = Rgba([final_r, final_g, final_b, final_alpha]);
     }
 
     out
 }
 
-fn calculate_final_alpha(fg: &[u8; 4], bg: &[u8; 4]) -> u8 {
-    let fg_alpha = fg[3] as f32 / 255.0;
-    let bg_alpha = bg[3] as f32 / 255.0;
-    let final_alpha = fg_alpha + bg_alpha * (1.0 - fg_alpha);
-    (final_alpha * 255.0) as u8
-}
-
-fn calculate_screen(x1: u8, x2: u8) -> u8 {
-    let f1 = x1 as f32 / 255.0;
-    let f2 = x2 as f32 / 255.0;
-    let v = 1.0 - (1.0 - f1) * (1.0 - f2);
-    (v * 255.0) as u8
-}
 // https://www.pocketmagic.net/enhance-saturation-in-images-programatically/
 fn saturate_hsv(hsv: &[f32; 4], percent: f32) -> [f32; 4] {
-    let (mut h, mut s, mut v) = (hsv[0], hsv[1], hsv[2]);
+    let (_, mut s, _) = (hsv[0], hsv[1], hsv[2]);
     if percent >= 0.0 {
         let interval = 1.0 - s;
         s = s + percent * interval * s;
@@ -130,7 +126,8 @@ fn saturate_hsv(hsv: &[f32; 4], percent: f32) -> [f32; 4] {
 
 // https://stackoverflow.com/questions/13806483/increase-or-decrease-color-saturation
 fn rgb_to_hsv(rgba: &[u8; 4]) -> [f32; 4] {
-    let (mut h, mut s) = (0.0, 0.0);
+    let mut h;
+    let s;
     let r = rgba[0] as f32 / 255.0;
     let g = rgba[1] as f32 / 255.0;
     let b = rgba[2] as f32 / 255.0;
@@ -159,7 +156,10 @@ fn rgb_to_hsv(rgba: &[u8; 4]) -> [f32; 4] {
 }
 
 fn hsv_to_rgb(hsv: &[f32; 4]) -> [u8; 4] {
-    let (mut r, mut g, mut b, a) = (0.0, 0.0, 0.0, hsv[3]);
+    let mut r;
+    let mut g;
+    let mut b;
+    let a = hsv[3];
     let mut h = hsv[0];
     let s = hsv[1];
     let v = hsv[2];
@@ -167,7 +167,7 @@ fn hsv_to_rgb(hsv: &[f32; 4]) -> [u8; 4] {
         r = v * 255.0;
         g = r;
         b = g;
-        return [r as u8, g as u8, v as u8, a as u8];
+        return [r as u8, g as u8, b as u8, a as u8];
     }
     h = h / 60.0;
     let i = h.floor();

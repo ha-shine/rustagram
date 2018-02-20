@@ -17,7 +17,6 @@ impl RustagramFilter for RgbaImage {
     fn apply_filter(&self, ft: FilterType) -> Self {
         match ft {
             FilterType::NineTeenSeventySeven => apply_1977(&self),
-            _ => apply_1977(&self)
         }
     }
 }
@@ -29,6 +28,6 @@ fn apply_1977(img: &RgbaImage) -> RgbaImage {
     let saturated = rustaops::saturate(&brightened, 30.0);
     let foreground = rustaops::pre_multiply(&saturated);
     let background = rustaops::fill_with_channels(width, height, &[243,106,188,76]);
-    let out = rustaops::apply_screen(&foreground, &background);
+    let out = rustaops::blend_screen(&foreground, &background);
     out
 }
