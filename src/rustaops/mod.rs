@@ -106,6 +106,18 @@ pub fn blend_overlay<I>(foreground: &I, background: &I) -> ImageBuffer<Rgba<u8>,
     process_blend(foreground, background, &blend::blend_overlay)
 }
 
+pub fn blend_color_dodge<I>(foreground: &I, background: &I) -> ImageBuffer<Rgba<u8>, Vec<u8>>
+    where I: GenericImage<Pixel=Rgba<u8>>
+{
+    process_blend(foreground, background, &blend::blend_color_dodge)
+}
+
+pub fn blend_darken<I>(foreground: &I, background: &I) -> ImageBuffer<Rgba<u8>, Vec<u8>>
+    where I: GenericImage<Pixel=Rgba<u8>>
+{
+    process_blend(foreground, background, &blend::blend_darken)
+}
+
 fn process_blend<I>(foreground: &I, background: &I, f: &Fn(u8, u8) -> u8) -> ImageBuffer<Rgba<u8>, Vec<u8>>
     where I: GenericImage<Pixel=Rgba<u8>>
 {
