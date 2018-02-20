@@ -1,9 +1,12 @@
 extern crate image;
 extern crate rustagram;
 
+use rustagram::{RustagramFilter};
+use rustagram::FilterType::*;
+
 fn main() {
     let img = image::open("test.jpg").unwrap();
-    let out = rustagram::over_with_one_rgba(&mut img.to_rgba(), [243,106,188,76]).unwrap();
+    let out = img.to_rgba().apply_filter(NineTeenSeventySeven);
 
     out.save("output.png").unwrap();
 }
