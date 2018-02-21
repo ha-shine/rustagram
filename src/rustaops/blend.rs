@@ -51,15 +51,18 @@ pub fn blend_linear_burn(x1: u8, x2: u8) -> u8 {
 
 #[allow(dead_code)]
 pub fn blend_color_dodge(x1: u8, x2: u8) -> u8 {
-    let f1 = x1 as f32 / 255.0;
-    let f2 = x2 as f32 / 255.0;
-    let v;
-    if f2 == 255.0 {
-        v = f2;
+    if x2 == 255 {
+        x2
     } else {
-        v = f1 * (2.0 as f32).powi(8) / (255.0 - f2)
+        let x1: u16 = x1 as u16;
+        let x2: u16 = x2 as u16;
+        let rhs = (x1<<8)/(255-x2);
+        if 255 < rhs {
+            255
+        } else {
+            rhs as u8
+        }
     }
-    (v * 255.0) as u8
 }
 
 #[allow(dead_code)]
