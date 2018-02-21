@@ -73,17 +73,16 @@ pub fn blend_linear_dodge(x1: u8, x2: u8) -> u8 {
     (v * 255.0) as u8
 }
 
+// ((uint8)((B < 128) ? (2 * A * B / 255):(255 - 2 * (255 - A) * (255 - B) / 255)))
 #[allow(dead_code)]
 pub fn blend_overlay(x1: u8, x2: u8) -> u8 {
-    let f1 = x1 as f32 / 255.0;
-    let f2 = x2 as f32 / 255.0;
-    let v;
-    if f1 > 0.5 {
-        v = 1.0 - (1.0 - 2.0 * (f1 - 0.5)) * (1.0 - f2);
+    let x1 = x1 as u16;
+    let x2 = x2 as u16;
+    if x2 < 128 {
+        (2 * x1 * x2 / 255) as u8
     } else {
-        v = 2.0 * f1 * f2;
+        (255 - 2 * (255 - x1) * (255 - x2) / 255) as u8
     }
-    (v * 255.0) as u8
 }
 
 #[allow(dead_code)]

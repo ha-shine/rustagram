@@ -49,19 +49,19 @@ fn apply_gingham(img: &RgbaImage) -> RgbaImage {
 
 fn apply_kelvin(img: &RgbaImage) -> RgbaImage {
     let (width, height) = img.dimensions();
-    let background = rustaops::fill_with_channels(width, height, &[56, 44, 52, 255]);
-    let color_dodged = rustaops::blend_color_dodge(img, &background);
-    let background = rustaops::fill_with_channels(width, height, &[183, 125, 33, 255]);
-    let out = rustaops::blend_overlay(&color_dodged, &background);
+    let foreground = rustaops::fill_with_channels(width, height, &[56, 44, 52, 255]);
+    let color_dodged = rustaops::blend_color_dodge(img, &foreground);
+    let foreground = rustaops::fill_with_channels(width, height, &[183, 125, 33, 255]);
+    let out = rustaops::blend_overlay(&foreground, &color_dodged);
     out
 }
 
 fn apply_lark(img: &RgbaImage) -> RgbaImage {
     let (width, height) = img.dimensions();
     let contrasted = imageops::contrast(img, -10.0);
-    let background = rustaops::fill_with_channels(width, height, &[34, 37, 63, 255]);
-    let color_dodged = rustaops::blend_color_dodge(&contrasted, &background);
-    let background = rustaops::fill_with_channels(width, height, &[242, 242, 242, 204]);
-    let out = rustaops::blend_darken(&color_dodged, &background);
+    let foreground = rustaops::fill_with_channels(width, height, &[34, 37, 63, 255]);
+    let color_dodged = rustaops::blend_color_dodge(&contrasted, &foreground);
+    let foreground = rustaops::fill_with_channels(width, height, &[242, 242, 242, 204]);
+    let out = rustaops::blend_darken(&foreground, &color_dodged);
     out
 }
