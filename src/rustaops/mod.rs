@@ -50,26 +50,6 @@ pub fn saturate<I>(image: &I, value: f32) -> ImageBuffer<Rgba<u8>, Vec<u8>>
     out
 }
 
-pub fn pre_multiply<I>(image: &I) -> ImageBuffer<Rgba<u8>, Vec<u8>>
-    where I: GenericImage<Pixel=Rgba<u8>> {
-    let (width, height) = image.dimensions();
-    let mut out = ImageBuffer::new(width, height);
-    for y in 0..height {
-        for x in 0..width {
-            let channels = image.get_pixel(x, y).data;
-            let a = channels[3] as f32;
-            let r = ((channels[0] as f32) * a / 255.0) as u8;
-            let g = ((channels[1] as f32) * a / 255.0) as u8;
-            let b = ((channels[2] as f32) * a / 255.0) as u8;
-
-            let channels = [r, g, b, channels[3]];
-            out.put_pixel(x, y, *Rgba::from_slice(&channels));
-        }
-    }
-
-    out
-}
-
 pub fn fill_with_channels(width: u32, height: u32, channels: &[u8; 4]) -> ImageBuffer<Rgba<u8>, Vec<u8>>
 {
     let a = channels[3] as f32;
@@ -82,6 +62,22 @@ pub fn fill_with_channels(width: u32, height: u32, channels: &[u8; 4]) -> ImageB
     for y in 0..height {
         for x in 0..width {
             out.put_pixel(x, y, *Rgba::from_slice(&fill));
+        }
+    }
+
+    out
+}
+
+pub fn restore_transparency<I>(image: &I) -> ImageBuffer<Rgba<u8>, Vec<u8>>
+    where I: GenericImage<Pixel=Rgba<u8>> {
+    let (width, height) = image.dimensions();
+    let mut out = ImageBuffer::new(width, height);
+    for y in 0..height {
+        for x in 0..width {
+            let mut e = image.get_pixel(x, y).data;
+            e[3] = 255;
+
+            out.put_pixel(x, y, *Rgba::from_slice(&e));
         }
     }
 
