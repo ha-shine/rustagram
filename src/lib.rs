@@ -10,6 +10,7 @@ pub enum FilterType {
     Aden,
     Brannan,
     Brooklyn,
+    Clarendon,
     Gingham,
     Kelvin,
     Lark,
@@ -27,6 +28,7 @@ impl RustagramFilter for RgbaImage {
             FilterType::Aden => apply_aden(&self),
             FilterType::Brannan => apply_brannan(&self),
             FilterType::Brooklyn => apply_brooklyn(&self),
+            FilterType::Clarendon => apply_clarendon(&self),
             FilterType::Gingham => apply_gingham(&self),
             FilterType::Kelvin => apply_kelvin(&self),
             FilterType::Lark => apply_lark(&self),
@@ -70,6 +72,15 @@ fn apply_brooklyn(img: &RgbaImage) -> RgbaImage {
     let foreground = rustaops::fill_with_channels(width, height, &[168,223,193,150]);
     let background = rustaops::restore_transparency(&brightened);
     let out = rustaops::blend_overlay(&foreground, &background);
+    out
+}
+
+fn apply_clarendon(img: &RgbaImage) -> RgbaImage {
+    let (width, height) = img.dimensions();
+    let contrasted = imageops::contrast(img, 20.0);
+    let saturated = rustaops::saturate(&contrasted, 35.0);
+    let foreground = rustaops::fill_with_channels(width, height, &[127,187,227,101]);
+    let out = rustaops::blend_overlay(&foreground, &saturated);
     out
 }
 
