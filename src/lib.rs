@@ -25,6 +25,7 @@ pub enum FilterType {
     Reyes,
     Rise,
     Slumber,
+    Stinson,
     Test
 }
 
@@ -54,6 +55,7 @@ impl RustagramFilter for RgbaImage {
             FilterType::Reyes => apply_reyes(&self),
             FilterType::Rise => apply_rise(&self),
             FilterType::Slumber => apply_slumber(&self),
+            FilterType::Stinson => apply_stinson(&self),
             FilterType::Test => apply_test(&self),
         }
     }
@@ -242,8 +244,18 @@ fn apply_slumber(img: &RgbaImage) -> RgbaImage {
     let brightened = rustaops::brighten_by_percent(&saturated, 5.0);
     let foreground = rustaops::fill_with_channels(width, height, &[69, 41, 12, 102]);
     let lightened = rustaops::blend_lighten(&foreground, &brightened);
-    let foreground = rustaops::fill_with_channels(width, height, &[125,105,24,128]);
+    let foreground = rustaops::fill_with_channels(width, height, &[125, 105, 24, 128]);
     let out = rustaops::blend_soft_light(&foreground, &lightened);
+    out
+}
+
+fn apply_stinson(img: &RgbaImage) -> RgbaImage {
+    let (width, height) = img.dimensions();
+    let contrasted = imageops::contrast(img, -25.0);
+    let saturated = rustaops::saturate(&contrasted, -15.0);
+    let brightened = rustaops::brighten_by_percent(&saturated, 15.0);
+    let foregroud = rustaops::fill_with_channels(width, height, &[240, 149, 128, 51]);
+    let out = rustaops::blend_soft_light(&foregroud, &brightened);
     out
 }
 
