@@ -1,6 +1,6 @@
 extern crate image;
 
-use image::{RgbaImage};
+use image::{RgbaImage, ConvertBuffer};
 use image::imageops;
 
 mod rustaops;
@@ -14,6 +14,7 @@ pub enum FilterType {
     Earlybird,
     Gingham,
     Hudson,
+    Inkwell,
     Kelvin,
     Lark,
     Test
@@ -34,6 +35,7 @@ impl RustagramFilter for RgbaImage {
             FilterType::Earlybird => apply_earlybird(&self),
             FilterType::Gingham => apply_gingham(&self),
             FilterType::Hudson => apply_hudson(&self),
+            FilterType::Inkwell => apply_inkwell(&self),
             FilterType::Kelvin => apply_kelvin(&self),
             FilterType::Lark => apply_lark(&self),
             FilterType::Test => apply_test(&self),
@@ -116,6 +118,14 @@ fn apply_hudson(img: &RgbaImage) -> RgbaImage {
     let blended = rustaops::blend_multiply(&foreground, &saturated);
     let out = rustaops::restore_transparency(&blended);
     out
+}
+
+fn apply_inkwell(img: &RgbaImage) -> RgbaImage {
+    let with_sepia = rustaops::sepia(img, 30.0);
+    let contrasted = imageops::contrast(&with_sepia, 10.0);
+    let brightened = rustaops::brighten_by_percent(&contrasted, 10.0);
+    let out = imageops::grayscale(&brightened);
+    ConvertBuffer::convert(&out)
 }
 
 fn apply_kelvin(img: &RgbaImage) -> RgbaImage {
