@@ -5,7 +5,6 @@ use rustagram::{RustagramFilter};
 use rustagram::FilterType::*;
 
 fn main() {
-    let img = image::open("test.jpg");
     let img = image::open("test.jpg").unwrap();
 
     let out = img.to_rgba().apply_filter(NineTeenSeventySeven);
@@ -44,4 +43,14 @@ fn main() {
     out.save("output/Reyes.jpg").unwrap();
     let out = img.to_rgba().apply_filter(Rise);
     out.save("output/Rise.jpg").unwrap();
+    let out = img.to_rgba().apply_filter(Slumber);
+    out.save("output/Slumber.jpg").unwrap();
+    let out = img.to_rgba().apply_filter(Stinson);
+    out.save("output/Stinson.jpg").unwrap();
+    let out = img.to_rgba().apply_filter(Toaster);
+    out.save("output/Toaster.jpg").unwrap();
+    let out = img.to_rgba().apply_filter(Valencia);
+    out.save("output/Valencia.jpg").unwrap();
+    let out = img.to_rgba().apply_filter(Walden);
+    out.save("output/Walden.jpg").unwrap();
 }

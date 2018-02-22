@@ -28,8 +28,7 @@ pub enum FilterType {
     Stinson,
     Toaster,
     Valencia,
-    Walden,
-    Test
+    Walden
 }
 
 pub trait RustagramFilter {
@@ -61,8 +60,7 @@ impl RustagramFilter for RgbaImage {
             FilterType::Stinson => apply_stinson(&self),
             FilterType::Toaster => apply_toaster(&self),
             FilterType::Valencia => apply_valencia(&self),
-            FilterType::Walden => apply_walden(&self),
-            FilterType::Test => apply_test(&self),
+            FilterType::Walden => apply_walden(&self)
         }
     }
 }
@@ -293,8 +291,4 @@ fn apply_walden(img: &RgbaImage) -> RgbaImage {
     let foreground = rustaops::fill_with_channels(width, height, &[0, 88, 244, 77]);
     let out = rustaops::blend_screen(&foreground, &sepia);
     out
-}
-
-fn apply_test(img: &RgbaImage) -> RgbaImage {
-    rustaops::saturate(img, 50.0)
 }
