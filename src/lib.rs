@@ -11,6 +11,7 @@ pub enum FilterType {
     Brannan,
     Brooklyn,
     Clarendon,
+    Earlybird,
     Gingham,
     Kelvin,
     Lark,
@@ -29,6 +30,7 @@ impl RustagramFilter for RgbaImage {
             FilterType::Brannan => apply_brannan(&self),
             FilterType::Brooklyn => apply_brooklyn(&self),
             FilterType::Clarendon => apply_clarendon(&self),
+            FilterType::Earlybird => apply_earlybird(&self),
             FilterType::Gingham => apply_gingham(&self),
             FilterType::Kelvin => apply_kelvin(&self),
             FilterType::Lark => apply_lark(&self),
@@ -58,9 +60,9 @@ fn apply_aden(img: &RgbaImage) -> RgbaImage {
 
 fn apply_brannan(img: &RgbaImage) -> RgbaImage {
     let (width, height) = img.dimensions();
-    let with_sepia = rustaops::sepia(img, 5.0);
-    let contrasted = imageops::contrast(&with_sepia, 40.0);
-    let foreground = rustaops::fill_with_channels(width, height, &[161,44,199,79]);
+    let with_sepia = rustaops::sepia(img, 20.0);
+    let contrasted = imageops::contrast(&with_sepia, 20.0);
+    let foreground = rustaops::fill_with_channels(width, height, &[161,44,199,59]);
     let out = rustaops::blend_lighten(&foreground, &contrasted);
     out
 }
@@ -81,6 +83,16 @@ fn apply_clarendon(img: &RgbaImage) -> RgbaImage {
     let saturated = rustaops::saturate(&contrasted, 35.0);
     let foreground = rustaops::fill_with_channels(width, height, &[127,187,227,101]);
     let out = rustaops::blend_overlay(&foreground, &saturated);
+    out
+}
+
+fn apply_earlybird(img: &RgbaImage) -> RgbaImage {
+    let (width, height) = img.dimensions();
+    let contrasted = imageops::contrast(img, -10.0);
+    let with_sepia = rustaops::sepia(&contrasted, 5.0);
+    let foreground = rustaops::fill_with_channels(width, height, &[208,186,142,150]);
+    let out = rustaops::blend_overlay(&with_sepia, &foreground);
+    let out = rustaops::restore_transparency(&out);
     out
 }
 

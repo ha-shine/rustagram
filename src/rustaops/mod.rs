@@ -64,7 +64,7 @@ pub fn sepia<I>(image: &I, intensity: f32) -> ImageBuffer<Rgba<u8>, Vec<u8>>
         let mut b = channels[2] as u16;
         let gray = (r + g + b) / 3;
 
-        r = gray + (depth * 2);
+        r = r + (depth * 2);
         g = g + depth;
         b = gray;
 
