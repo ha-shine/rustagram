@@ -21,6 +21,7 @@ pub enum FilterType {
     Maven,
     Mayfair,
     Moon,
+    Nashville,
     Test
 }
 
@@ -46,6 +47,7 @@ impl RustagramFilter for RgbaImage {
             FilterType::Maven => apply_maven(&self),
             FilterType::Mayfair => apply_mayfair(&self),
             FilterType::Moon => apply_moon(&self),
+            FilterType::Nashville => apply_nashville(&self),
             FilterType::Test => apply_test(&self),
         }
     }
@@ -188,6 +190,19 @@ fn apply_moon(img: &RgbaImage) -> RgbaImage {
     let lighten = rustaops::blend_lighten(&foreground, &soft_light);
     let out = imageops::grayscale(&lighten);
     ConvertBuffer::convert(&out)
+}
+
+fn apply_nashville(img: &RgbaImage) -> RgbaImage {
+    let (width, height) = img.dimensions();
+    let with_sepia = rustaops::sepia(img, 2.0);
+    let contrasted = imageops::contrast(&with_sepia, 20.0);
+    let brightened = rustaops::brighten_by_percent(&contrasted, 5.0);
+    let saturated = rustaops::saturate(&brightened, 20.0);
+    let foreground = rustaops::fill_with_channels(width, height, &[247,176,153,243]);
+    let darkened = rustaops::blend_darken(&foreground, &saturated);
+    let foreground = rustaops::fill_with_channels(width, height, &[0,70,150,230]);
+    let out = rustaops::blend_lighten(&foreground, &darkened);
+    out
 }
 
 fn apply_test(img: &RgbaImage) -> RgbaImage {
