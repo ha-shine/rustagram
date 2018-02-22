@@ -50,6 +50,46 @@ pub fn saturate<I>(image: &I, value: f32) -> ImageBuffer<Rgba<u8>, Vec<u8>>
     out
 }
 
+pub fn sepia<I>(image: &I, intensity: f32) -> ImageBuffer<Rgba<u8>, Vec<u8>>
+    where I: GenericImage<Pixel=Rgba<u8>> {
+    let (width, height) = image.dimensions();
+    let depth = 20;
+    let mut out = ImageBuffer::new(width, height);
+
+    let percent = intensity / 100.0;
+    for (x, y, pixel) in out.enumerate_pixels_mut() {
+        let channels = image.get_pixel(x, y).data;
+        let mut r = channels[0] as u16;
+        let mut g = channels[1] as u16;
+        let mut b = channels[2] as u16;
+        let gray = (r + g + b) / 3;
+
+        r = gray + (depth * 2);
+        g = g + depth;
+        b = gray;
+
+        if r > 255 {
+            r = 255
+        }
+        if g > 255 {
+            g = 255
+        }
+        if b > 255 {
+            b = 255
+        }
+
+        let f = b as f32;
+        b = (f - (f * percent)) as u16;
+
+        if b > 255 {
+            b = 255
+        }
+        *pixel = Rgba([r as u8, g as u8, b as u8, channels[3]]);
+    }
+
+    out
+}
+
 pub fn fill_with_channels(width: u32, height: u32, channels: &[u8; 4]) -> ImageBuffer<Rgba<u8>, Vec<u8>>
 {
     let a = channels[3] as f32;
