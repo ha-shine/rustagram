@@ -24,6 +24,7 @@ pub enum FilterType {
     Nashville,
     Reyes,
     Rise,
+    Slumber,
     Test
 }
 
@@ -52,6 +53,7 @@ impl RustagramFilter for RgbaImage {
             FilterType::Nashville => apply_nashville(&self),
             FilterType::Reyes => apply_reyes(&self),
             FilterType::Rise => apply_rise(&self),
+            FilterType::Slumber => apply_slumber(&self),
             FilterType::Test => apply_test(&self),
         }
     }
@@ -63,7 +65,7 @@ fn apply_1977(img: &RgbaImage) -> RgbaImage {
     let brightened = rustaops::brighten_by_percent(&contrasted, 10.0);
     let saturated = rustaops::saturate(&brightened, 30.0);
     let foreground = rustaops::fill_with_channels(width, height, &[243,106,188,76]);
-    let out = rustaops::blend_screen(&foreground, &saturated);
+    let out = rustaops::blend_screen(&saturated, &foreground);
     out
 }
 
@@ -228,9 +230,20 @@ fn apply_rise(img: &RgbaImage) -> RgbaImage {
     let saturated = rustaops::saturate(&contrast, -10.0);
     let foreground = rustaops::fill_with_channels(width, height, &[236, 205, 169, 240]);
     let multiply = rustaops::blend_multiply(&foreground, &saturated);
-    let foreground = rustaops::fill_with_channels(width, height, &[232, 197, 152, 234]);
-    let foreground = rustaops::blend_overlay(&foreground, &multiply);
-    let out = rustaops::over(&foreground, img);
+    let foreground = rustaops::fill_with_channels(width, height, &[232, 197, 152, 10]);
+    let overlaid = rustaops::blend_overlay(&foreground, &multiply);
+    let out = rustaops::over(&overlaid, img);
+    out
+}
+
+fn apply_slumber(img: &RgbaImage) -> RgbaImage {
+    let (width, height) = img.dimensions();
+    let saturated = rustaops::saturate(img, -34.0);
+    let brightened = rustaops::brighten_by_percent(&saturated, 5.0);
+    let foreground = rustaops::fill_with_channels(width, height, &[69, 41, 12, 102]);
+    let lightened = rustaops::blend_lighten(&foreground, &brightened);
+    let foreground = rustaops::fill_with_channels(width, height, &[125,105,24,128]);
+    let out = rustaops::blend_soft_light(&foreground, &lightened);
     out
 }
 

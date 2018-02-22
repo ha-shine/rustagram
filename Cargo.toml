@@ -6,3 +6,11 @@ authors = ["Htet Aung Shine <h@shine.rocks>"]
 [dependencies]
 image = "*"
 rayon = "1.0"
+
+[[bin]]
+name = "rustagram"
+path = "src/main.rs"
+
+[[bin]]
+name = "producer"
+path = "src/producer.rs"
