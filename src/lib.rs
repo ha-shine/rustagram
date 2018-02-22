@@ -17,6 +17,7 @@ pub enum FilterType {
     Inkwell,
     Kelvin,
     Lark,
+    Lofi,
     Test
 }
 
@@ -38,6 +39,7 @@ impl RustagramFilter for RgbaImage {
             FilterType::Inkwell => apply_inkwell(&self),
             FilterType::Kelvin => apply_kelvin(&self),
             FilterType::Lark => apply_lark(&self),
+            FilterType::Lofi => apply_lofi(&self),
             FilterType::Test => apply_test(&self),
         }
     }
@@ -146,6 +148,13 @@ fn apply_lark(img: &RgbaImage) -> RgbaImage {
     let out = rustaops::blend_darken(&foreground, &color_dodged);
     out
 }
+
+fn apply_lofi(img: &RgbaImage) -> RgbaImage {
+    let saturated = rustaops::saturate(img, 10.0);
+    let out = imageops::contrast(&saturated, 50.0);
+    out
+}
+
 
 fn apply_test(img: &RgbaImage) -> RgbaImage {
     rustaops::sepia(img, 50.0)
