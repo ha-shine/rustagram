@@ -20,6 +20,7 @@ pub enum FilterType {
     Lofi,
     Maven,
     Mayfair,
+    Moon,
     Test
 }
 
@@ -44,6 +45,7 @@ impl RustagramFilter for RgbaImage {
             FilterType::Lofi => apply_lofi(&self),
             FilterType::Maven => apply_maven(&self),
             FilterType::Mayfair => apply_mayfair(&self),
+            FilterType::Moon => apply_moon(&self),
             FilterType::Test => apply_test(&self),
         }
     }
@@ -174,6 +176,18 @@ fn apply_mayfair(img: &RgbaImage) -> RgbaImage {
     let foreground = rustaops::fill_with_channels(width, height, &[255,200,200,153]);
     let out = rustaops::blend_overlay(&foreground, &saturated);
     out
+}
+
+fn apply_moon(img: &RgbaImage) -> RgbaImage {
+    let (width, height) = img.dimensions();
+    let contrasted = imageops::contrast(img, 10.0);
+    let brightened = rustaops::brighten_by_percent(&contrasted, 10.0);
+    let foreground = rustaops::fill_with_channels(width, height, &[160,160,160,255]);
+    let soft_light = rustaops::blend_soft_light(&foreground, &brightened);
+    let foreground = rustaops::fill_with_channels(width, height, &[56,56,56,255]);
+    let lighten = rustaops::blend_lighten(&foreground, &soft_light);
+    let out = imageops::grayscale(&lighten);
+    ConvertBuffer::convert(&out)
 }
 
 fn apply_test(img: &RgbaImage) -> RgbaImage {
