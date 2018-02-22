@@ -23,6 +23,7 @@ pub enum FilterType {
     Moon,
     Nashville,
     Reyes,
+    Rise,
     Test
 }
 
@@ -50,6 +51,7 @@ impl RustagramFilter for RgbaImage {
             FilterType::Moon => apply_moon(&self),
             FilterType::Nashville => apply_nashville(&self),
             FilterType::Reyes => apply_reyes(&self),
+            FilterType::Rise => apply_rise(&self),
             FilterType::Test => apply_test(&self),
         }
     }
@@ -215,6 +217,20 @@ fn apply_reyes(img: &RgbaImage) -> RgbaImage {
     let saturated = rustaops::saturate(&contrast, -25.0);
     let foreground = rustaops::fill_with_channels(width, height, &[239, 205, 173, 10]);
     let out = rustaops::over(&foreground, &saturated);
+    out
+}
+
+fn apply_rise(img: &RgbaImage) -> RgbaImage {
+    let (width, height) = img.dimensions();
+    let brightened = rustaops::brighten_by_percent(img, 5.0);
+    let with_sepia = rustaops::sepia(&brightened, 5.0);
+    let contrast = imageops::contrast(&with_sepia, -10.0);
+    let saturated = rustaops::saturate(&contrast, -10.0);
+    let foreground = rustaops::fill_with_channels(width, height, &[236, 205, 169, 240]);
+    let multiply = rustaops::blend_multiply(&foreground, &saturated);
+    let foreground = rustaops::fill_with_channels(width, height, &[232, 197, 152, 234]);
+    let foreground = rustaops::blend_overlay(&foreground, &multiply);
+    let out = rustaops::over(&foreground, img);
     out
 }
 
