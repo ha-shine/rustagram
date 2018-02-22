@@ -19,6 +19,7 @@ pub enum FilterType {
     Lark,
     Lofi,
     Maven,
+    Mayfair,
     Test
 }
 
@@ -42,6 +43,7 @@ impl RustagramFilter for RgbaImage {
             FilterType::Lark => apply_lark(&self),
             FilterType::Lofi => apply_lofi(&self),
             FilterType::Maven => apply_maven(&self),
+            FilterType::Mayfair => apply_mayfair(&self),
             FilterType::Test => apply_test(&self),
         }
     }
@@ -161,8 +163,17 @@ fn apply_maven(img: &RgbaImage) -> RgbaImage {
     let with_sepia = rustaops::sepia(img, 25.0);
     let brightened = rustaops::brighten_by_percent(&with_sepia, -0.05);
     let contrasted = imageops::contrast(&brightened, -0.05);
-    let saturated = rustaops::saturate(&contrasted, 50.0);
-    saturated
+    let out = rustaops::saturate(&contrasted, 50.0);
+    out
+}
+
+fn apply_mayfair(img: &RgbaImage) -> RgbaImage {
+    let (width, height) = img.dimensions();
+    let contrasted = imageops::contrast(img, 10.0);
+    let saturated = rustaops::saturate(&contrasted, 10.0);
+    let foreground = rustaops::fill_with_channels(width, height, &[255,200,200,153]);
+    let out = rustaops::blend_overlay(&foreground, &saturated);
+    out
 }
 
 fn apply_test(img: &RgbaImage) -> RgbaImage {

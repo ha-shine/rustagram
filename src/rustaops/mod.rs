@@ -293,9 +293,9 @@ pub fn saturate<I>(image: &I, value: f32) -> ImageBuffer<Rgba<u8>, Vec<u8>>
     let percent = value / 100.0;
     for (x, y, pixel) in out.enumerate_pixels_mut() {
         let data = image.get_pixel(x, y).data;
-        let mut hsl = rgb_to_hls(&data);
-        hsl[2] = saturate_value(hsl[2], percent);
-        let rgb = hls_to_rgb(&hsl, data[3]);
+        let mut hls = rgb_to_hls(&data);
+        hls[2] = saturate_value(hls[2], percent);
+        let rgb = hls_to_rgb(&hls, data[3]);
 
         *pixel = Rgba(rgb);
     }
