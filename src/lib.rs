@@ -28,6 +28,7 @@ pub enum FilterType {
     Stinson,
     Toaster,
     Valencia,
+    Walden,
     Test
 }
 
@@ -60,6 +61,7 @@ impl RustagramFilter for RgbaImage {
             FilterType::Stinson => apply_stinson(&self),
             FilterType::Toaster => apply_toaster(&self),
             FilterType::Valencia => apply_valencia(&self),
+            FilterType::Walden => apply_walden(&self),
             FilterType::Test => apply_test(&self),
         }
     }
@@ -279,6 +281,17 @@ fn apply_valencia(img: &RgbaImage) -> RgbaImage {
     let sepia = rustaops::sepia(&brightened, 8.0);
     let foreground = rustaops::fill_with_channels(width, height, &[58, 3, 57, 128]);
     let out = rustaops::blend_exclusion(&foreground, &sepia);
+    out
+}
+
+fn apply_walden(img: &RgbaImage) -> RgbaImage {
+    let (width, height) = img.dimensions();
+    let brightened = rustaops::brighten_by_percent(img, 10.0);
+    let huerotated = imageops::huerotate(&brightened, -10);
+    let saturated = rustaops::saturate(&huerotated, 60.0);
+    let sepia = rustaops::sepia(&saturated, 5.0);
+    let foreground = rustaops::fill_with_channels(width, height, &[0, 88, 244, 77]);
+    let out = rustaops::blend_screen(&foreground, &sepia);
     out
 }
 
