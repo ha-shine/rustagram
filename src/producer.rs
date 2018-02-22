@@ -1,8 +1,8 @@
 extern crate image;
 extern crate rustagram;
 
-use rustagram::{RustagramFilter};
-use rustagram::FilterType::*;
+use rustagram::filters::{RustagramFilter};
+use rustagram::filters::FilterType::*;
 
 fn main() {
     let img = image::open("test.jpg").unwrap();
