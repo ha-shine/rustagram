@@ -26,6 +26,7 @@ pub enum FilterType {
     Rise,
     Slumber,
     Stinson,
+    Toaster,
     Test
 }
 
@@ -56,6 +57,7 @@ impl RustagramFilter for RgbaImage {
             FilterType::Rise => apply_rise(&self),
             FilterType::Slumber => apply_slumber(&self),
             FilterType::Stinson => apply_stinson(&self),
+            FilterType::Toaster => apply_toaster(&self),
             FilterType::Test => apply_test(&self),
         }
     }
@@ -254,8 +256,17 @@ fn apply_stinson(img: &RgbaImage) -> RgbaImage {
     let contrasted = imageops::contrast(img, -25.0);
     let saturated = rustaops::saturate(&contrasted, -15.0);
     let brightened = rustaops::brighten_by_percent(&saturated, 15.0);
-    let foregroud = rustaops::fill_with_channels(width, height, &[240, 149, 128, 51]);
-    let out = rustaops::blend_soft_light(&foregroud, &brightened);
+    let foreground = rustaops::fill_with_channels(width, height, &[240, 149, 128, 51]);
+    let out = rustaops::blend_soft_light(&foreground, &brightened);
+    out
+}
+
+fn apply_toaster(img: &RgbaImage) -> RgbaImage {
+    let (width, height) = img.dimensions();
+    let contrasted = imageops::contrast(img, 20.0);
+    let brightened = rustaops::brighten_by_percent(&contrasted, -10.0);
+    let foreground = rustaops::fill_with_channels(width, height, &[128, 78, 15, 140]);
+    let out = rustaops::blend_screen(&foreground, &brightened);
     out
 }
 
