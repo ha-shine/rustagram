@@ -28,25 +28,43 @@ pub fn blend_lighten(x1: u8, x2: u8) -> u8 {
 
 #[allow(dead_code)]
 pub fn blend_multiply(x1: u8, x2: u8) -> u8 {
-    let f1 = x1 as f32 / 255.0;
-    let f2 = x2 as f32;
-    (f1 * f2) as u8
+    let x1 = x1 as u16;
+    let x2 = x2 as u16;
+    ((x1 * x2) / 255) as u8
 }
 
 #[allow(dead_code)]
 pub fn blend_color_burn(x1: u8, x2: u8) -> u8 {
-    let f1 = x1 as f32 / 255.0;
-    let f2 = x2 as f32 / 255.0;
-    let v = 1.0 - (1.0 - f1) / f2;
-    (v * 255.0) as u8
+    if x2 == 0 {
+        x2
+    } else {
+        let x1 = x1 as u16;
+        let x2 = x2 as u16;
+        let max = 255 as u16;
+        let rhs = max.wrapping_sub(((max - x1)<<8)/x2);
+        if rhs > 0 {
+            rhs as u8
+        } else {
+            0
+        }
+    }
+}
+
+#[allow(dead_code)]
+pub fn blend_subtract(x1: u8, x2: u8) -> u8 {
+    let x1 = x1 as u16;
+    let x2 = x2 as u16;
+    let lhs = x1 + x2;
+    if lhs < 255 {
+        0
+    } else {
+        (lhs - 255) as u8
+    }
 }
 
 #[allow(dead_code)]
 pub fn blend_linear_burn(x1: u8, x2: u8) -> u8 {
-    let f1 = x1 as f32 / 255.0;
-    let f2 = x2 as f32 / 255.0;
-    let v = f1 + f2 - 255.0;
-    (v * 255.0) as u8
+    blend_subtract(x2, x1)
 }
 
 #[allow(dead_code)]
@@ -66,14 +84,16 @@ pub fn blend_color_dodge(x1: u8, x2: u8) -> u8 {
 }
 
 #[allow(dead_code)]
-pub fn blend_linear_dodge(x1: u8, x2: u8) -> u8 {
-    let f1 = x1 as f32 / 255.0;
-    let f2 = x2 as f32 / 255.0;
-    let v = f1 + f2;
-    (v * 255.0) as u8
+pub fn blend_add(x1: u8, x2: u8) -> u8 {
+    let rhs = x1.wrapping_add(x2);
+    rhs
 }
 
-// ((uint8)((B < 128) ? (2 * A * B / 255):(255 - 2 * (255 - A) * (255 - B) / 255)))
+#[allow(dead_code)]
+pub fn blend_linear_dodge(x1: u8, x2: u8) -> u8 {
+    blend_add(x2, x1)
+}
+
 #[allow(dead_code)]
 pub fn blend_overlay(x1: u8, x2: u8) -> u8 {
     let x1 = x1 as u16;
@@ -98,80 +118,46 @@ pub fn blend_soft_light(x1: u8, x2: u8) -> u8 {
 
 #[allow(dead_code)]
 pub fn blend_hard_light(x1: u8, x2: u8) -> u8 {
-    let f1 = x1 as f32 / 255.0;
-    let v;
-    let f2 = x2 as f32 / 255.0;
-    if f2 > 0.5 {
-        v = 1.0 - (1.0 - f1) * (1.0 - 2.0 * (f2 - 0.5));
-    } else {
-        v = f1 * (f2 + 2.0);
-    }
-    (v * 255.0) as u8
+    blend_overlay(x2, x1)
 }
 
 #[allow(dead_code)]
 pub fn blend_vivid_light(x1: u8, x2: u8) -> u8 {
-    let f1 = x1 as f32 / 255.0;
-    let f2 = x2 as f32 / 255.0;
-    let v;
-    if f2 > 0.5 {
-        v = 1.0 - (1.0 - f1) / (2.0 * (f2 - 0.5));
+    if x2 < 128 {
+        blend_color_burn(x1, x2 * 2)
     } else {
-        v = f1 / (1.0 - 2.0 * f2);
+        blend_color_dodge(x1, 2 * (x2 - 128))
     }
-    (v * 255.0) as u8
 }
 
 #[allow(dead_code)]
 pub fn blend_linear_light(x1: u8, x2: u8) -> u8 {
-    let f1 = x1 as f32 / 255.0;
-    let f2 = x2 as f32 / 255.0;
-    let v;
-    if f2 > 0.5 {
-        v = f1 + 2.0 * (f2 - 0.5);
+    if x2 < 128 {
+        blend_linear_burn(x1, 2 * x2)
     } else {
-        v = f1 + 2.0 * f2 - 0.1;
+        blend_linear_dodge(x1, 2 * (x2 - 128))
     }
-    (v * 255.0) as u8
 }
 
 #[allow(dead_code)]
 pub fn blend_pin_light(x1: u8, x2: u8) -> u8 {
-    let f1 = x1 as f32 / 255.0;
-    let f2 = x2 as f32 / 255.0;
-    let v;
-    if f2 > 0.5 {
-        let lhs = f1;
-        let rhs = 2.0 * (f2 - 0.5);
-        if lhs > rhs {
-            v = lhs;
-        } else {
-            v = rhs;
-        }
+    if x2 < 128 {
+        blend_darken(x1, 2 * x2)
     } else {
-        let lhs = f1;
-        let rhs = 2.0 * f2;
-        if lhs < rhs {
-            v = lhs;
-        } else {
-            v = rhs;
-        }
+        blend_lighten(x1, 2 * (x2 - 128))
     }
-    (v * 255.0) as u8
 }
 
 #[allow(dead_code)]
 pub fn blend_difference(x1: u8, x2: u8) -> u8 {
-    let f1 = x1 as f32 / 255.0;
-    let f2 = x2 as f32 / 255.0;
-    let v = (f1 - f2).abs();
-    (v * 255.0) as u8
+    let x1 = x1 as i16;
+    let x2 = x2 as i16;
+    (x1 - x2).abs() as u8
 }
 
 #[allow(dead_code)]
 pub fn blend_exclusion(x1: u8, x2: u8) -> u8 {
-    let f1 = x1 as f32 / 255.0;
-    let f2 = x2 as f32 / 255.0;
-    let v = 0.5 - 2.0 * (f1 - 0.5) * (f2 - 0.5);
-    (v * 255.0) as u8
+    let x1 = x1 as u32;
+    let x2 = x2 as u32;
+    (x1 + x2 - 2 * x1 * x2 / 255) as u8
 }
