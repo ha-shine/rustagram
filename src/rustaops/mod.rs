@@ -160,6 +160,13 @@ pub fn blend_darken<I>(foreground: &I, background: &I) -> ImageBuffer<Rgba<u8>, 
 }
 
 #[allow(dead_code)]
+pub fn blend_lighten<I>(foreground: &I, background: &I) -> ImageBuffer<Rgba<u8>, Vec<u8>>
+    where I: GenericImage<Pixel=Rgba<u8>>
+{
+    process_blend(foreground, background, &blend::blend_lighten)
+}
+
+#[allow(dead_code)]
 pub fn blend_multiply<I>(foreground: &I, background: &I) -> ImageBuffer<Rgba<u8>, Vec<u8>>
     where I: GenericImage<Pixel=Rgba<u8>>
 {

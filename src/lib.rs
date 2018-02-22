@@ -8,9 +8,11 @@ mod rustaops;
 pub enum FilterType {
     NineTeenSeventySeven,
     Aden,
+    Brannan,
     Gingham,
     Kelvin,
-    Lark
+    Lark,
+    Test
 }
 
 pub trait RustagramFilter {
@@ -21,10 +23,12 @@ impl RustagramFilter for RgbaImage {
     fn apply_filter(&self, ft: FilterType) -> Self {
         match ft {
             FilterType::NineTeenSeventySeven => apply_1977(&self),
+            FilterType::Aden => apply_aden(&self),
+            FilterType::Brannan => apply_brannan(&self),
             FilterType::Gingham => apply_gingham(&self),
             FilterType::Kelvin => apply_kelvin(&self),
             FilterType::Lark => apply_lark(&self),
-            FilterType::Aden => apply_aden(&self),
+            FilterType::Test => apply_test(&self),
         }
     }
 }
@@ -36,6 +40,24 @@ fn apply_1977(img: &RgbaImage) -> RgbaImage {
     let saturated = rustaops::saturate(&brightened, 30.0);
     let foreground = rustaops::fill_with_channels(width, height, &[243,106,188,76]);
     let out = rustaops::blend_screen(&foreground, &saturated);
+    out
+}
+
+fn apply_aden(img: &RgbaImage) -> RgbaImage {
+    let huerotated = imageops::huerotate(img, -20);
+    let contrasted = imageops::contrast(&huerotated, -10.0);
+    let saturated = rustaops::saturate(&contrasted, -20.0);
+    let brightened = rustaops::brighten_by_percent(&saturated, 20.0);
+    let out = rustaops::restore_transparency(&brightened);
+    out
+}
+
+fn apply_brannan(img: &RgbaImage) -> RgbaImage {
+    let (width, height) = img.dimensions();
+    let with_sepia = rustaops::sepia(img, 5.0);
+    let contrasted = imageops::contrast(&with_sepia, 40.0);
+    let foreground = rustaops::fill_with_channels(width, height, &[161,44,199,79]);
+    let out = rustaops::blend_lighten(&foreground, &contrasted);
     out
 }
 
@@ -67,11 +89,6 @@ fn apply_lark(img: &RgbaImage) -> RgbaImage {
     out
 }
 
-fn apply_aden(img: &RgbaImage) -> RgbaImage {
-    let huerotated = imageops::huerotate(img, -20);
-    let contrasted = imageops::contrast(&huerotated, -10.0);
-    let saturated = rustaops::saturate(&contrasted, -20.0);
-    let brightened = rustaops::brighten_by_percent(&saturated, 20.0);
-    let out = rustaops::restore_transparency(&brightened);
-    out
+fn apply_test(img: &RgbaImage) -> RgbaImage {
+    rustaops::sepia(img, 50.0)
 }
