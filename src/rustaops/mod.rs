@@ -105,6 +105,29 @@ pub fn restore_transparency<I>(image: &I) -> ImageBuffer<Rgba<u8>, Vec<u8>>
     out
 }
 
+pub fn over<I>(foreground: &I, background: &I) -> ImageBuffer<Rgba<u8>, Vec<u8>>
+    where I: GenericImage<Pixel=Rgba<u8>>
+{
+    let (width, height) = foreground.dimensions();
+    let mut out = ImageBuffer::new(width, height);
+    for (x, y, pixel) in out.enumerate_pixels_mut() {
+        let fg_data = foreground.get_pixel(x, y).data;
+        let bg_data = background.get_pixel(x, y).data;
+        let final_alpha = blend::compute_final_alpha(&fg_data, &bg_data);
+        let mut final_data = [0; 4];
+        final_data[3] = final_alpha;
+        for i in 0..3 {
+            let fg_c = fg_data[i] as f32 / 255.0;
+            let bg_c = bg_data[i] as f32 / 255.0;
+            let final_c = fg_c + bg_c * (1.0 - fg_c);
+            final_data[i] = (final_c * 255.0) as u8;
+        }
+        *pixel = Rgba(final_data);
+    }
+
+    out
+}
+
 #[allow(dead_code)]
 pub fn blend_screen<I>(foreground: &I, background: &I) -> ImageBuffer<Rgba<u8>, Vec<u8>>
     where I: GenericImage<Pixel=Rgba<u8>>

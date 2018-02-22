@@ -22,6 +22,7 @@ pub enum FilterType {
     Mayfair,
     Moon,
     Nashville,
+    Reyes,
     Test
 }
 
@@ -48,6 +49,7 @@ impl RustagramFilter for RgbaImage {
             FilterType::Mayfair => apply_mayfair(&self),
             FilterType::Moon => apply_moon(&self),
             FilterType::Nashville => apply_nashville(&self),
+            FilterType::Reyes => apply_reyes(&self),
             FilterType::Test => apply_test(&self),
         }
     }
@@ -202,6 +204,17 @@ fn apply_nashville(img: &RgbaImage) -> RgbaImage {
     let darkened = rustaops::blend_darken(&foreground, &saturated);
     let foreground = rustaops::fill_with_channels(width, height, &[0,70,150,230]);
     let out = rustaops::blend_lighten(&foreground, &darkened);
+    out
+}
+
+fn apply_reyes(img: &RgbaImage) -> RgbaImage {
+    let (width, height) = img.dimensions();
+    let with_sepia = rustaops::sepia(img, 22.0);
+    let brightened = rustaops::brighten_by_percent(&with_sepia, 10.0);
+    let contrast = imageops::contrast(&brightened, -15.0);
+    let saturated = rustaops::saturate(&contrast, -25.0);
+    let foreground = rustaops::fill_with_channels(width, height, &[239, 205, 173, 10]);
+    let out = rustaops::over(&foreground, &saturated);
     out
 }
 

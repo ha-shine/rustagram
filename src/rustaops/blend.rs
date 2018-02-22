@@ -8,7 +8,6 @@ pub fn compute_final_alpha(fg: &[u8; 4], bg: &[u8; 4]) -> u8 {
     (final_alpha * 255.0) as u8
 }
 
-// ((uint8)(255 - (((255 - A) * (255 - B)) >> 8)))
 #[allow(dead_code)]
 pub fn blend_screen(x1: u8, x2: u8) -> u8 {
     let x1: u16 = x1 as u16;
