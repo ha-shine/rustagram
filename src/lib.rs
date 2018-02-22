@@ -13,6 +13,7 @@ pub enum FilterType {
     Clarendon,
     Earlybird,
     Gingham,
+    Hudson,
     Kelvin,
     Lark,
     Test
@@ -32,6 +33,7 @@ impl RustagramFilter for RgbaImage {
             FilterType::Clarendon => apply_clarendon(&self),
             FilterType::Earlybird => apply_earlybird(&self),
             FilterType::Gingham => apply_gingham(&self),
+            FilterType::Hudson => apply_hudson(&self),
             FilterType::Kelvin => apply_kelvin(&self),
             FilterType::Lark => apply_lark(&self),
             FilterType::Test => apply_test(&self),
@@ -102,6 +104,17 @@ fn apply_gingham(img: &RgbaImage) -> RgbaImage {
     let background = imageops::huerotate(&brightened, -10);
     let foreground = rustaops::fill_with_channels(width, height, &[230, 230, 230, 255]);
     let out = rustaops::blend_soft_light(&foreground, &background);
+    out
+}
+
+fn apply_hudson(img: &RgbaImage) -> RgbaImage {
+    let (width, height) = img.dimensions();
+    let brightened = rustaops::brighten_by_percent(img, 50.0);
+    let constrasted = imageops::contrast(&brightened, -10.0);
+    let saturated = rustaops::saturate(&constrasted, 10.0);
+    let foreground = rustaops::fill_with_channels(width, height, &[166, 177, 255, 208]);
+    let blended = rustaops::blend_multiply(&foreground, &saturated);
+    let out = rustaops::restore_transparency(&blended);
     out
 }
 
