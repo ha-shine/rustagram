@@ -18,6 +18,7 @@ pub enum FilterType {
     Kelvin,
     Lark,
     Lofi,
+    Maven,
     Test
 }
 
@@ -40,6 +41,7 @@ impl RustagramFilter for RgbaImage {
             FilterType::Kelvin => apply_kelvin(&self),
             FilterType::Lark => apply_lark(&self),
             FilterType::Lofi => apply_lofi(&self),
+            FilterType::Maven => apply_maven(&self),
             FilterType::Test => apply_test(&self),
         }
     }
@@ -155,7 +157,14 @@ fn apply_lofi(img: &RgbaImage) -> RgbaImage {
     out
 }
 
+fn apply_maven(img: &RgbaImage) -> RgbaImage {
+    let with_sepia = rustaops::sepia(img, 25.0);
+    let brightened = rustaops::brighten_by_percent(&with_sepia, -0.05);
+    let contrasted = imageops::contrast(&brightened, -0.05);
+    let saturated = rustaops::saturate(&contrasted, 50.0);
+    saturated
+}
 
 fn apply_test(img: &RgbaImage) -> RgbaImage {
-    rustaops::sepia(img, 50.0)
+    rustaops::saturate(img, 50.0)
 }

@@ -31,25 +31,6 @@ pub fn brighten_by_percent<I, P>(image: &I, value: f32) -> ImageBuffer<P, Vec<u8
     out
 }
 
-pub fn saturate<I>(image: &I, value: f32) -> ImageBuffer<Rgba<u8>, Vec<u8>>
-    where I: GenericImage<Pixel=Rgba<u8>> {
-    let (width, height) = image.dimensions();
-    let mut out = ImageBuffer::new(width, height);
-
-    let percent = value / 100.0;
-    for y in 0..height {
-        for x in 0..width {
-            let channels = image.get_pixel(x, y).channels4();
-            let hsv = rgb_to_hsv(&[channels.0, channels.1, channels.2, channels.3]);
-            let hsv = saturate_hsv(&hsv, percent);
-            let rgb = hsv_to_rgb(&hsv);
-            out.put_pixel(x, y, *Rgba::from_slice(&rgb));
-        }
-    }
-
-    out
-}
-
 pub fn sepia<I>(image: &I, intensity: f32) -> ImageBuffer<Rgba<u8>, Vec<u8>>
     where I: GenericImage<Pixel=Rgba<u8>> {
     let (width, height) = image.dimensions();
@@ -254,105 +235,118 @@ fn process_blend<I>(foreground: &I, background: &I, f: &Fn(u8, u8) -> u8) -> Ima
     out
 }
 
-// https://www.pocketmagic.net/enhance-saturation-in-images-programatically/
-fn saturate_hsv(hsv: &[f32; 4], percent: f32) -> [f32; 4] {
-    let (_, mut s, _) = (hsv[0], hsv[1], hsv[2]);
+fn saturate_value(s: f32, percent: f32) -> f32 {
+    let mut s = s;
     if percent >= 0.0 {
         let interval = 1.0 - s;
         s = s + percent * interval * s;
     } else {
         s = s + percent * s;
     }
-    [hsv[0], s, hsv[2], hsv[3]]
+    s
 }
 
-// https://stackoverflow.com/questions/13806483/increase-or-decrease-color-saturation
-fn rgb_to_hsv(rgba: &[u8; 4]) -> [f32; 4] {
-    let mut h;
-    let s;
+fn rgb_to_hls(rgba: &[u8; 4]) -> [f32; 3] {
     let r = rgba[0] as f32 / 255.0;
     let g = rgba[1] as f32 / 255.0;
     let b = rgba[2] as f32 / 255.0;
-    let a = rgba[3] as f32;
-    let min = float_min(r, g, b);
+
     let max = float_max(r, g, b);
+    let min = float_min(r, g, b);
+
+    let mut hue = 0.0;
+    let mut saturation = 0.0;
+    let lumination = (max + min) / 2.0;
+
+    if max == min {
+        return [hue, lumination, saturation]
+    }
+
     let delta = max - min;
-    let v = max;
-    if max != 0.0 {
-        s = delta / max;
+    if lumination < 0.5 {
+        saturation = delta / (max + min);
     } else {
-        s = 0.0;
-        h = -1.0;
-        return [h, s, 0.0, a];
+        saturation = delta / (2.0 - max - min);
     }
-    match max {
-        x if x == r => h = (g - b) / delta,
-        x if x == g => h = 2.0 + (b - r) / delta,
-        _ => h = 4.0 + (r - g) / delta
+
+    if r == max {
+        hue = (g - b) / delta;
+    } else if g == max {
+        hue = 2.0 + (b - r) / delta;
+    } else {
+        hue = 4.0 + (r - g) / delta;
     }
-    h *= 60.0;
-    if h < 0.0 {
-        h += 360.0;
+
+    hue /= 6.0;
+    if hue < 0.0 {
+        hue += 1.0;
     }
-    [h, s, v, a]
+
+    return [hue, lumination, saturation]
 }
 
-fn hsv_to_rgb(hsv: &[f32; 4]) -> [u8; 4] {
-    let mut r;
-    let mut g;
-    let mut b;
-    let a = hsv[3];
-    let mut h = hsv[0];
-    let s = hsv[1];
-    let v = hsv[2];
-    if s == 0.0 {
-        r = v * 255.0;
-        g = r;
-        b = g;
-        return [r as u8, g as u8, b as u8, a as u8];
+pub fn saturate<I>(image: &I, value: f32) -> ImageBuffer<Rgba<u8>, Vec<u8>>
+    where I: GenericImage<Pixel=Rgba<u8>> {
+    let (width, height) = image.dimensions();
+    let mut out = ImageBuffer::new(width, height);
+
+    let percent = value / 100.0;
+    for (x, y, pixel) in out.enumerate_pixels_mut() {
+        let data = image.get_pixel(x, y).data;
+        let mut hsl = rgb_to_hls(&data);
+        hsl[2] = saturate_value(hsl[2], percent);
+        let rgb = hls_to_rgb(&hsl, data[3]);
+
+        *pixel = Rgba(rgb);
     }
-    h = h / 60.0;
-    let i = h.floor();
-    let f = h - i;
-    let p = v * (1.0 - s);
-    let q = v * (1.0 - s * f);
-    let t = v * (1.0 - s * (1.0 - f));
-    match i {
-        x if x == 0.0 => {
-            r = v;
-            g = t;
-            b = p;
-        },
-        x if x == 1.0 => {
-            r = q;
-            g = v;
-            b = p;
-        },
-        x if x == 2.0 => {
-            r = p;
-            g = v;
-            b = t;
-        },
-        x if x == 3.0 => {
-            r = p;
-            g = q;
-            b = v;
-        },
-        x if x == 4.0 => {
-            r = t;
-            g = p;
-            b = v;
-        },
-        _ => {
-            r = v;
-            g = p;
-            b = q;
+
+    out
+}
+
+fn hls_to_rgb(hsl: &[f32; 3], alpha: u8) -> [u8; 4] {
+    let (r,g,b,m1,m2);
+    let hue = hsl[0];
+    let lumination = hsl[1];
+    let saturation = hsl[2];
+    if saturation == 0.0 {
+        r = lumination;
+        g = lumination;
+        b = lumination;
+    } else {
+        if lumination <= 0.5 {
+            m2 = lumination * (1.0 + saturation);
+        } else {
+            m2 = lumination + saturation - lumination * saturation;
         }
+        m1 = 2.0 * lumination - m2;
+        r = hue_to_rgb(m1, m2, hue + (1.0/3.0));
+        g = hue_to_rgb(m1, m2, hue);
+        b = hue_to_rgb(m1, m2, hue - (1.0/3.0));
     }
-    r = r * 255.0;
-    g = g * 255.0;
-    b = b * 255.0;
-    return [r as u8, g as u8, b as u8, a as u8]
+
+    let red = (r * 255.0) as u8;
+    let green = (g * 255.0) as u8;
+    let blue = (b * 255.0) as u8;
+    [red, green, blue, alpha]
+}
+
+fn hue_to_rgb(m1: f32, m2: f32, hue: f32) -> f32 {
+    let mut hue = hue;
+    if hue < 0.0 {
+        hue += 1.0;
+    } else if hue > 1.0 {
+        hue -= 1.0;
+    }
+
+    if (6.0 * hue) < 1.0 {
+        return m1 + (m2 - m1) * hue * 6.0
+    } else if (2.0 * hue) < 1.0 {
+        return m2
+    } else if (3.0 * hue) < 2.0 {
+        return m1 + (m2 - m1) * ((2.0/3.0) - hue) * 6.0
+    } else {
+        return m1
+    }
 }
 
 fn float_max(a: f32, b: f32, c: f32) -> f32 {
