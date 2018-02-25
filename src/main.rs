@@ -3,6 +3,7 @@ extern crate rustagram;
 #[macro_use]
 extern crate clap;
 
+use rustagram::filters::{RustagramFilter};
 use rustagram::filters::FilterType::*;
 use std::process;
 
@@ -39,4 +40,8 @@ fn main() {
             process::exit(1);
         }
     };
+
+    let img = image::open(input).unwrap();
+    let out = img.to_rgba().apply_filter(filter_type);
+    out.save(output).unwrap();
 }

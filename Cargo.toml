@@ -2,11 +2,13 @@
 name = "rustagram"
 version = "0.1.0"
 authors = ["Htet Aung Shine <h@shine.rocks>"]
+description = "Apply instagram filters to your photos."
+exclude = ["output"]
+license = "Unlicense/MIT"
 
 [dependencies]
-image = "*"
-rayon = "1.0"
-clap = "*"
+image = "0.18.0"
+clap = "2.30.0"
 
 [[bin]]
 name = "rustagram"
